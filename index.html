@@ -22,6 +22,7 @@
   font-size:15px;
 }
 *{box-sizing:border-box}
+.hidden{display:none}
 body{margin:0;font-family:'Inter',system-ui,sans-serif;color:var(--ink);background:var(--water)}
 h1,h2,h3,.disp{font-family:'Barlow Semi Condensed',sans-serif}
 
@@ -36,11 +37,12 @@ main{max-width:1280px;margin:0 auto;padding:18px 22px 60px}
 .panel h2{margin:0 0 4px;font-size:1.15rem;color:var(--navy)}
 .panel .hint{color:var(--muted);font-size:.82rem;margin:0 0 12px}
 
-label.f{display:flex;flex-direction:column;gap:3px;font-size:.75rem;font-weight:600;color:var(--muted)}
+label.f{display:flex;flex-direction:column;gap:3px;font-size:.75rem;font-weight:600;color:var(--muted);white-space:nowrap}
 input[type=text],input[type=number],input[type=time],select{
   font:inherit;font-size:.85rem;padding:5px 7px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);min-width:0}
 input[type=number]{width:64px}
-input[type=time]{width:104px}
+input[type=time]{width:122px}
+input[type=text],input[type=number],input[type=time]{height:31px}
 input:focus,select:focus,button:focus-visible{outline:2px solid var(--aqua);outline-offset:1px}
 
 button{font:inherit;cursor:pointer;border-radius:7px;border:1px solid var(--line);background:#fff;padding:7px 12px;font-weight:600;font-size:.85rem;color:var(--navy)}
@@ -52,27 +54,38 @@ button.ghost{border:none;background:none;color:var(--muted);padding:4px 6px}
 button.ghost:hover{color:var(--rope);background:none}
 
 .settings-grid{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end}
-.daywins{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin-top:10px}
+.daywins{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:8px;margin-top:12px}
 .daywin{border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:6px;background:#fbfdfe}
 .daywin .dw-top{display:flex;align-items:center;gap:6px;font-weight:700;font-family:'Barlow Semi Condensed';color:var(--navy)}
-.daywin .times{display:flex;gap:6px;align-items:center;font-size:.8rem}
+.daywin .times{display:flex;gap:6px;align-items:center;font-size:.8rem;color:var(--muted)}
+.daywin .times input{flex:1 1 0;width:auto;min-width:0}
 .daywin.off{opacity:.5}
 
-/* group + ops tables */
+/* group + ops rows: fields sit in small clusters that wrap as units,
+   so nothing can overlap or run off the page at any window width */
 .rows{display:flex;flex-direction:column;gap:8px}
-.grow,.orow{display:grid;gap:8px;align-items:end;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fbfdfe}
-.grow{grid-template-columns:14px 1.4fr 90px 70px 70px 84px 84px 104px 104px auto 1fr 30px}
-.orow{grid-template-columns:14px 1.4fr auto 104px 104px 80px 80px 1fr 30px}
-.swatch{width:14px;height:34px;border-radius:4px;align-self:stretch;margin-top:14px}
-.daychecks{display:flex;gap:2px}
-.daychecks label{display:flex;flex-direction:column;align-items:center;font-size:.62rem;font-weight:700;color:var(--muted);gap:1px;cursor:pointer}
+.grow,.orow{position:relative;display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end;
+  border:1px solid var(--line);border-radius:8px;padding:10px 38px 10px 20px;background:#fbfdfe;overflow:hidden}
+.swatch{position:absolute;left:0;top:0;bottom:0;width:8px}
+.fg{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:flex-end;min-width:0}
+.fg.id{flex:1 1 320px;max-width:460px}
+.fg.id label.wide{flex:1 1 140px}
+.fg.id label.wide input{width:100%}
+.grow>.ghost,.orow>.ghost{position:absolute;top:6px;right:4px}
+.daychecks{display:flex;gap:4px;align-items:flex-end;min-height:31px}
+.daychecks label{display:flex;flex-direction:column;align-items:center;font-size:.66rem;font-weight:700;color:var(--muted);gap:2px;cursor:pointer;min-width:16px}
 .daychecks input{margin:0}
-.daychecks.off{opacity:.4}
-.daychecks .wk{font-size:.68rem;font-weight:700;color:var(--navy);align-self:center;margin-left:6px;white-space:nowrap}
-.autobox{display:flex;align-items:center;gap:4px;font-size:.72rem;font-weight:600;color:var(--muted);margin-top:16px;white-space:nowrap}
-.addbtns{margin-top:10px;display:flex;gap:8px}
+.daychecks.off label{opacity:.4}
+.daychecks .wk{font-size:.7rem;font-weight:700;color:var(--navy);align-self:center;margin-left:6px;white-space:nowrap}
+.autobox{display:flex;align-items:center;gap:5px;height:31px;font-size:.75rem;font-weight:600;color:var(--muted);white-space:nowrap}
+.autobox input{margin:0}
+.autobox label{cursor:pointer}
+details.how{margin:0 0 12px;font-size:.82rem;color:var(--muted)}
+details.how summary{cursor:pointer;font-weight:600;color:var(--aqua)}
+details.how ul{margin:8px 0 0;padding-left:18px;display:grid;gap:4px;max-width:900px}
+.addbtns{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap}
 
-.genbar{display:flex;align-items:center;gap:14px;margin:20px 0}
+.genbar{display:flex;align-items:center;gap:10px 14px;margin:20px 0;flex-wrap:wrap}
 .genbar .warn{color:var(--rope);font-size:.85rem;font-weight:600}
 
 /* failures */
@@ -88,7 +101,7 @@ button.ghost:hover{color:var(--rope);background:none}
 /* day grid */
 .day-section{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:18px}
 .day-section.hidden{display:none}
-.day-head{display:flex;align-items:baseline;gap:12px;margin-bottom:2px}
+.day-head{display:flex;align-items:baseline;gap:6px 12px;margin-bottom:2px;flex-wrap:wrap}
 .day-head h3{margin:0;font-size:1.3rem;color:var(--navy);text-transform:uppercase;letter-spacing:.04em}
 .day-head .win{color:var(--muted);font-size:.82rem}
 .sides{display:flex;font-family:'Barlow Semi Condensed';font-weight:600;font-size:.78rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin:6px 0 4px}
@@ -116,7 +129,7 @@ table.summary td .am{color:var(--aqua);font-weight:600}
 table.summary td.offc{color:#b3bfcd}
 
 /* nudge panel */
-#nudge{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;border-radius:12px;padding:10px 16px;display:none;gap:10px;align-items:center;box-shadow:0 6px 24px rgba(11,37,69,.35);z-index:50}
+#nudge{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;border-radius:12px;padding:10px 16px;display:none;gap:8px 10px;align-items:center;flex-wrap:wrap;justify-content:center;width:max-content;max-width:calc(100vw - 24px);box-shadow:0 6px 24px rgba(11,37,69,.35);z-index:50}
 #nudge.show{display:flex}
 #nudge .nm{font-family:'Barlow Semi Condensed';font-weight:700;margin-right:4px}
 .block.clash{outline:2px dashed #c0392b;outline-offset:-2px;box-shadow:0 2px 10px rgba(192,57,43,.35)}
@@ -126,15 +139,22 @@ table.summary td.offc{color:#b3bfcd}
 .day-head .addbar{margin-left:auto;display:flex;gap:6px;align-items:center}
 .addsel{font:inherit;font-size:.74rem;padding:3px 6px;border:1px solid var(--line);border-radius:6px;background:#fff;max-width:210px}
 .addbtn{font-size:.74rem;padding:4px 10px}
-.poolt{font-size:.68rem;font-weight:700;color:var(--aqua);align-self:center;white-space:nowrap}
+.poolt{font-size:.72rem;font-weight:700;color:var(--aqua);height:31px;display:flex;align-items:center;white-space:nowrap}
+.poolt:empty{display:none}
 #nudge button{background:var(--navy-2);border:1px solid #2a5a96;color:#fff;padding:5px 10px}
 #nudge button:hover{background:var(--aqua)}
 #nudge .keys{font-size:.66rem;opacity:.72;margin-left:2px;border-left:1px solid #2a5a96;padding-left:10px;white-space:nowrap}
-#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--rope);color:#fff;padding:8px 16px;border-radius:8px;font-size:.85rem;display:none;z-index:60}
+#toast{max-width:calc(100vw - 24px);position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--rope);color:#fff;padding:8px 16px;border-radius:8px;font-size:.85rem;display:none;z-index:60}
 
 .io{display:flex;gap:8px;flex-wrap:wrap}
 footer.note{color:var(--muted);font-size:.78rem;max-width:1280px;margin:0 auto;padding:0 22px 30px}
 
+@media (max-width:640px){
+  main{padding:12px 12px 60px}
+  header.app{padding:12px 14px}
+  .panel{padding:12px}
+  #nudge .keys{display:none}
+}
 @media print{
   @page{size:letter landscape;margin:7mm}
   :root{--slot-h:10.5px}
@@ -171,7 +191,17 @@ footer.note{color:var(--muted);font-size:.78rem;max-width:1280px;margin:0 auto;p
 
   <section class="panel">
     <h2>Groups</h2>
-    <p class="hint">Check <b>auto days</b> and just enter <b>days/wk</b> — the generator picks which days, spreading them the way a coach would (3&times; lands M/W/F, 4&times; M/T/Th/F, 6&times; uses Saturday) and balancing the load across the week. Uncheck it to pin exact days: the group then swims on <b>exactly</b> the days you check. <b>Priority</b> runs 1&ndash;9: when groups share a time window, priority 1 gets the earliest water and 9 the latest. Two groups with the <b>same coach</b> are never scheduled at the same time. <b>Length</b> is the whole practice &mdash; tick <b>weight room</b> and the dryland minutes come off the lane time. Set lanes by hand, or check <b>auto lanes</b> to size them from group numbers (swimmers &divide; swimmers-per-lane, rounded up). Earliest/latest bound when the group can be in the water.</p>
+    <p class="hint">One card per group. Enter the basics, set when the group can be in the water, and choose its days.</p>
+    <details class="how"><summary>How the settings work</summary>
+      <ul>
+        <li><b>Auto lanes</b> sizes the group from its numbers (swimmers &divide; swimmers-per-lane, rounded up). Uncheck it to set lanes by hand.</li>
+        <li><b>Priority</b> runs 1&ndash;9: when groups share a time window, priority 1 gets the earliest water and 9 the latest.</li>
+        <li><b>Length</b> is the whole practice. Tick <b>weight room</b> and the dryland minutes come off the lane time.</li>
+        <li><b>Earliest start / Latest end</b> bound when the group can be in the water.</li>
+        <li><b>Auto days</b>: enter days/wk and the generator picks which days (3&times; lands M/W/F, 4&times; M/T/Th/F, 6&times; uses Saturday) and balances the week. Uncheck it and the group swims on <b>exactly</b> the days you check.</li>
+        <li>Two groups with the <b>same coach</b> are never scheduled at the same time.</li>
+      </ul>
+    </details>
     <div class="rows" id="groupRows"></div>
     <div class="addbtns">
       <button id="addGroup">+ Add group</button>
@@ -306,21 +336,33 @@ function renderGroups(){
     const row=el("div","grow");
     row.innerHTML=`
       <div class="swatch" style="background:${g.color}"></div>
-      <label class="f">Group name <input type="text" value="${esc(g.name)}" data-f="name"></label>
-      <label class="f">Coach (opt.) <input type="text" value="${esc(g.coach)}" data-f="coach" style="width:84px"></label>
-      <label class="f">Swimmers <input type="number" min="1" value="${g.swimmers}" data-f="swimmers"></label>
-      <div class="autobox"><input type="checkbox" ${g.auto?"checked":""} data-f="auto" id="au_${g.id}"><label for="au_${g.id}">auto lanes</label></div>
-      <label class="f">Lanes <input type="number" min="1" value="${effLanes(g)}" data-f="lanes" ${g.auto?"disabled":""}></label>
-      <label class="f" title="1 = earliest water in the group's window, 9 = latest">Priority (1=early) <input type="number" min="1" max="9" value="${g.priority||5}" data-f="priority"></label>
-      <label class="f">Length (min) <input type="number" min="15" step="15" value="${g.dur}" data-f="dur"></label>
-      <div class="autobox"><input type="checkbox" ${g.dryland?"checked":""} data-f="dryland" id="dl_${g.id}"><label for="dl_${g.id}" title="part of the practice is in the weight room, so the group needs the lanes for less time">weight room</label></div>
-      <label class="f" title="minutes in the weight room — subtracted from the practice length to get pool time">Dryland (min) <input type="number" min="0" step="15" value="${g.dryMin||0}" data-f="dryMin" ${g.dryland?"":"disabled"} style="width:58px"></label>
-      <span class="poolt" title="lane time the generator will reserve">${g.dryland?`pool ${effDur(g)}m`:""}</span>
-      <label class="f">Earliest <input type="time" step="900" value="${g.earliest}" data-f="earliest"></label>
-      <label class="f">Latest end <input type="time" step="900" value="${g.latest}" data-f="latest"></label>
-      <div class="autobox"><input type="checkbox" ${g.autoDays?"checked":""} data-f="autoDays" id="ad_${g.id}"><label for="ad_${g.id}" title="let the generator pick which days">auto days</label></div>
-      <label class="f" title="how many practices per week">Days/wk <input type="number" min="1" max="6" value="${g.autoDays?(g.perWeek||3):g.days.filter(Boolean).length}" data-f="perWeek" ${g.autoDays?"":"disabled"} style="width:52px"></label>
-      <div class="daychecks${g.autoDays?" off":""}">${DAYS_S.map((d,i)=>`<label>${d[0]}<input type="checkbox" data-day="${i}" ${g.days[i]?"checked":""} ${g.autoDays?"disabled":""}></label>`).join("")}<span class="wk">${g.autoDays?(g.perWeek||3)+"&times;/wk auto":g.days.filter(Boolean).length+"&times;/wk"}</span></div>
+      <div class="fg id">
+        <label class="f wide">Group name <input type="text" value="${esc(g.name)}" data-f="name"></label>
+        <label class="f">Coach (optional) <input type="text" value="${esc(g.coach)}" data-f="coach" style="width:110px"></label>
+        <label class="f">Swimmers <input type="number" min="1" value="${g.swimmers}" data-f="swimmers"></label>
+      </div>
+      <div class="fg">
+        <label class="f">Lanes <input type="number" min="1" value="${effLanes(g)}" data-f="lanes" ${g.auto?"disabled":""}></label>
+        <div class="autobox"><input type="checkbox" ${g.auto?"checked":""} data-f="auto" id="au_${g.id}"><label for="au_${g.id}">auto lanes</label></div>
+      </div>
+      <div class="fg">
+        <label class="f" title="1 = earliest water in the group's window, 9 = latest">Priority (1&ndash;9) <input type="number" min="1" max="9" value="${g.priority||5}" data-f="priority"></label>
+        <label class="f">Length (min) <input type="number" min="15" step="15" value="${g.dur}" data-f="dur"></label>
+      </div>
+      <div class="fg">
+        <div class="autobox"><input type="checkbox" ${g.dryland?"checked":""} data-f="dryland" id="dl_${g.id}"><label for="dl_${g.id}" title="part of the practice is in the weight room, so the group needs the lanes for less time">weight room</label></div>
+        <label class="f" title="minutes in the weight room — subtracted from the practice length to get pool time">Dryland (min) <input type="number" min="0" step="15" value="${g.dryMin||0}" data-f="dryMin" ${g.dryland?"":"disabled"}></label>
+        <span class="poolt" title="lane time the generator will reserve">${g.dryland?`pool ${effDur(g)}m`:""}</span>
+      </div>
+      <div class="fg">
+        <label class="f">Earliest start <input type="time" step="900" value="${g.earliest}" data-f="earliest"></label>
+        <label class="f">Latest end <input type="time" step="900" value="${g.latest}" data-f="latest"></label>
+      </div>
+      <div class="fg">
+        <div class="autobox"><input type="checkbox" ${g.autoDays?"checked":""} data-f="autoDays" id="ad_${g.id}"><label for="ad_${g.id}" title="let the generator pick which days">auto days</label></div>
+        <label class="f" title="how many practices per week">Days/wk <input type="number" min="1" max="6" value="${g.autoDays?(g.perWeek||3):g.days.filter(Boolean).length}" data-f="perWeek" ${g.autoDays?"":"disabled"}></label>
+        <div class="daychecks${g.autoDays?" off":""}">${DAYS_S.map((d,i)=>`<label>${d[0]}<input type="checkbox" data-day="${i}" ${g.days[i]?"checked":""} ${g.autoDays?"disabled":""}></label>`).join("")}<span class="wk">${g.autoDays?(g.perWeek||3)+"&times;/wk auto":g.days.filter(Boolean).length+"&times;/wk"}</span></div>
+      </div>
       <button class="ghost" data-f="del" title="delete group">✕</button>`;
     row.querySelectorAll("input").forEach(inp=>{
       inp.onchange=()=>{
@@ -347,14 +389,21 @@ function renderOps(){
   state.ops.forEach(op=>{
     const row=el("div","orow");
     row.innerHTML=`
-      <div class="swatch" style="background:repeating-linear-gradient(-45deg,#e7edf2 0 6px,#f6f9fb 6px 12px);border:1px solid var(--line)"></div>
-      <label class="f">Operation <input type="text" value="${esc(op.name)}" placeholder="e.g. HS Water Polo" data-f="name"></label>
-      <div class="daychecks">${DAYS_S.map((d,i)=>`<label>${d[0]}<input type="checkbox" data-day="${i}" ${op.days[i]?"checked":""}></label>`).join("")}</div>
-      <label class="f">Start <input type="time" step="900" value="${op.start}" data-f="start"></label>
-      <label class="f">End <input type="time" step="900" value="${op.end}" data-f="end"></label>
-      <label class="f">Lane from <input type="number" min="1" value="${op.laneFrom}" data-f="laneFrom"></label>
-      <label class="f">Lane to <input type="number" min="1" value="${op.laneTo}" data-f="laneTo"></label>
-      <div></div>
+      <div class="swatch" style="background:repeating-linear-gradient(-45deg,#e7edf2 0 6px,#f6f9fb 6px 12px);border-right:1px solid var(--line)"></div>
+      <div class="fg id">
+        <label class="f wide">Operation <input type="text" value="${esc(op.name)}" placeholder="e.g. HS Water Polo" data-f="name"></label>
+      </div>
+      <div class="fg">
+        <div class="daychecks">${DAYS_S.map((d,i)=>`<label>${d[0]}<input type="checkbox" data-day="${i}" ${op.days[i]?"checked":""}></label>`).join("")}</div>
+      </div>
+      <div class="fg">
+        <label class="f">Start <input type="time" step="900" value="${op.start}" data-f="start"></label>
+        <label class="f">End <input type="time" step="900" value="${op.end}" data-f="end"></label>
+      </div>
+      <div class="fg">
+        <label class="f">Lane from <input type="number" min="1" value="${op.laneFrom}" data-f="laneFrom"></label>
+        <label class="f">Lane to <input type="number" min="1" value="${op.laneTo}" data-f="laneTo"></label>
+      </div>
       <button class="ghost" data-f="del" title="delete">✕</button>`;
     row.querySelectorAll("input").forEach(inp=>{
       inp.onchange=()=>{
@@ -1340,7 +1389,7 @@ function loadSample(){
     newOp({name:"High School Practice",days:[true,true,true,true,true,false],start:"15:00",end:"16:45",laneFrom:1,laneTo:10})
   ];
   renderGroups();renderOps();
-  toast("Loaded 16 groups + HS practice — tweak, then Generate");
+  toast("Loaded 17 groups + HS practice — tweak, then Generate");
 }
 
 /* ---------- export / import ---------- */
