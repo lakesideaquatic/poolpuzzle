@@ -205,7 +205,7 @@ footer.note{color:var(--muted);font-size:.78rem;max-width:1280px;margin:0 auto;p
     <div class="rows" id="groupRows"></div>
     <div class="addbtns">
       <button id="addGroup">+ Add group</button>
-      <button id="loadSample">Load LAC Justin roster</button>
+      <button id="loadSample">Load All LAC Groups</button>
       <button id="clearGroups" class="ghost">Clear all</button>
     </div>
   </section>
@@ -1360,36 +1360,34 @@ function exportXlsx(){
 /* ---------- sample data ---------- */
 function loadSample(){
   colorIdx=0;
-  /* LAC Justin roster: swimmers + practice length + practices/week.
-     Lanes are auto-sized from group numbers and the generator picks the
-     days — set a window or priority per group to steer the result. */
+  /* Every group on the LAC Athlete Pathway, in pathway order. Practice length
+     and practices/week come from the pathway; swimmer counts are starting
+     numbers to edit for your site. Lanes are auto-sized from group numbers
+     and the generator picks the days. */
   const G=(name,swimmers,dur,perWeek)=>newGroup({
     name,swimmers,dur,perWeek,auto:true,autoDays:true,
     earliest:"15:00",latest:"21:00",priority:5});
   state.groups=[
-    G("NAT",21,120,6),
-    G("SR",30,120,6),
-    G("Senior Prep",34,105,5),
-    G("GOLD 1",18,90,5),
+    G("Red 1",19,45,3),
+    G("Red 2",27,45,3),
+    G("Black 1",15,45,3),
+    G("Black 2",22,45,3),
+    G("Bronze 1",21,60,4),
+    G("Bronze 2",22,60,4),
+    G("Bronze 3",22,60,4),
+    G("Silver 1",18,75,4),
+    G("Silver 2",17,75,4),
+    G("Gold 1",18,90,5),
+    G("Gold 2",23,90,5),
     G("AGS",18,120,6),
-    G("NAT-P",21,120,6),
-    G("GOLD 2",23,90,5),
-    G("BR 1",21,60,4),
-    G("BR 2",22,60,4),
-    G("BR 3",22,60,4),
-    G("BLACK 2",22,45,3),
-    G("SLV 1",18,75,4),
-    G("SLV 2",17,75,4),
-    G("RED 2",27,45,3),
-    G("BLACK 1",15,45,3),
-    G("RED 1",19,45,3),
+    G("Senior Prep",34,120,6),
+    G("National Prep",21,120,6),
+    G("Senior",30,120,6),
+    G("National",21,120,6),
     G("Lakeside Fit",20,60,2)
   ];
-  state.ops=[
-    newOp({name:"High School Practice",days:[true,true,true,true,true,false],start:"15:00",end:"16:45",laneFrom:1,laneTo:10})
-  ];
-  renderGroups();renderOps();
-  toast("Loaded 17 groups + HS practice — tweak, then Generate");
+  renderGroups();
+  toast("Loaded all 17 LAC groups — set swimmer counts, then Generate");
 }
 
 /* ---------- export / import ---------- */
