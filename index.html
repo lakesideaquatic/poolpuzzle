@@ -106,6 +106,8 @@ details.how ul{margin:8px 0 0;padding-left:18px;display:grid;gap:4px;max-width:9
 .day-head .win{color:var(--muted);font-size:.82rem}
 .sides{display:flex;font-family:'Barlow Semi Condensed';font-weight:600;font-size:.78rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin:6px 0 4px}
 .grid-wrap{overflow-x:auto}
+.sides{min-width:860px;padding-left:52px;gap:10px;margin:6px 0 2px}
+.sides span{text-align:center;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pgrid{display:grid;position:relative;min-width:860px}
 .laneno{font-family:'Barlow Semi Condensed';font-weight:700;font-size:.8rem;color:var(--navy);display:flex;align-items:center;justify-content:center;border-bottom:2px solid var(--navy)}
 .lanecol{border-left:1px dashed #d5e4ea}
@@ -164,7 +166,7 @@ footer.note{color:var(--muted);font-size:.78rem;max-width:1280px;margin:0 auto;p
   .day-section{display:block!important;border:none;page-break-after:always;padding:0}
   #summaryPanel{display:block!important;border:none;page-break-after:always;padding:0}
   .grid-wrap{overflow:visible}
-  .pgrid{min-width:0}
+  .pgrid,.sides{min-width:0}
   .block{box-shadow:none}
 }
 </style>
@@ -178,12 +180,11 @@ footer.note{color:var(--muted);font-size:.78rem;max-width:1280px;margin:0 auto;p
 <main>
   <section class="panel" id="poolPanel">
     <h2>Pool setup</h2>
-    <p class="hint">Lane count, bulkhead position, and the hours the pool is available each day. Blocks never cross the bulkhead.</p>
+    <p class="hint">Lane count, bulkheads, and the hours the pool is available each day. For more than one bulkhead, list the lanes separated by commas (for example <b>8, 16</b>); leave it blank for a pool with none. The generator never places a group across a bulkhead.</p>
     <div class="settings-grid">
       <label class="f">Total lanes <input type="number" id="setLanes" min="4" max="30" value="21"></label>
-      <label class="f">Bulkhead after lane <input type="number" id="setBulk" min="0" max="29" value="10"></label>
-      <label class="f">Side A label <input type="text" id="setSideA" value="Dive Tank Side" style="width:140px"></label>
-      <label class="f">Side B label <input type="text" id="setSideB" value="Lesson Side" style="width:140px"></label>
+      <label class="f" title="The lane each bulkhead sits after. Separate several with commas; leave blank for none.">Bulkheads after lanes <input type="text" id="setBulk" value="10" placeholder="e.g. 8, 16" inputmode="numeric" style="width:130px"></label>
+      <label class="f" title="One name per section of the pool, left to right, separated by commas">Section labels (left to right) <input type="text" id="setSides" value="Dive Tank Side, Lesson Side" placeholder="e.g. Shallow, Middle, Deep" style="width:260px"></label>
       <label class="f">Swimmers per lane (auto mode) <input type="number" id="setPerLane" min="1" max="12" value="5"></label>
     </div>
     <div class="daywins" id="dayWins"></div>
@@ -293,14 +294,23 @@ function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
 function poolCfg(){
-  return {
-    lanes:Math.max(2,+document.getElementById("setLanes").value||21),
-    bulk:+document.getElementById("setBulk").value||0,
-    sideA:document.getElementById("setSideA").value,
-    sideB:document.getElementById("setSideB").value,
-    perLane:Math.max(1,+document.getElementById("setPerLane").value||5)
-  };
+  const lanes=Math.max(2,+document.getElementById("setLanes").value||21);
+  /* any number of bulkheads: "10" or "8, 16" -> sorted lane numbers */
+  const bulks=[...new Set(String(document.getElementById("setBulk").value).split(/[^0-9]+/).filter(Boolean).map(Number))]
+    .filter(b=>b>=1&&b<lanes).sort((a,b)=>a-b);
+  const sides=document.getElementById("setSides").value.split(",").map(s=>s.trim());
+  return {lanes,bulks,sides,perLane:Math.max(1,+document.getElementById("setPerLane").value||5)};
 }
+const crossesBulk=(p,lf,lt)=>p.bulks.some(b=>lf<=b&&lt>b);
+/* grid/sheet column of a lane: each bulkhead to its left takes a column */
+const laneColOf=(p,l)=>1+l+p.bulks.filter(b=>b<l).length;
+/* the stretches of open water between bulkheads, left to right */
+function sections(p){
+  const out=[];let from=1;
+  [...p.bulks,p.lanes].forEach((to,i)=>{out.push({from,to,label:p.sides[i]||""});from=to+1;});
+  return out;
+}
+const secText=s=>(s.label?s.label+" · ":"")+(s.from===s.to?"lane "+s.from:"lanes "+s.from+"–"+s.to);
 function effLanes(g){const p=poolCfg();return g.auto?Math.max(1,Math.ceil((g.swimmers||0)/p.perLane)):Math.max(1,g.lanes||1);}
 
 /* ---------- day windows UI ---------- */
@@ -439,7 +449,7 @@ function runSchedule(p,rng){
   });
   const free=(d,sm,em,lf,lt)=>{
     const o=occ[d];if(!o||sm<o.s||em>o.e||lf<1||lt>p.lanes)return false;
-    if(p.bulk>0&&lf<=p.bulk&&lt>p.bulk)return false; /* no crossing bulkhead */
+    if(crossesBulk(p,lf,lt))return false; /* no crossing a bulkhead */
     for(let t=(sm-o.s)/15;t<(em-o.s)/15;t++)for(let l=lf;l<=lt;l++)if(o.grid[t][l])return false;
     return true;
   };
@@ -483,9 +493,17 @@ function runSchedule(p,rng){
        scheduled on exactly those days.
      - autoDays (on): group needs perWeek practices and the generator picks
        which days, spreading them across the emptiest, best-separated days. */
+  const maxSec=Math.max(...sections(p).map(s=>s.to-s.from+1));
   const plans=state.groups.filter(g=>g.name.trim()).map(g=>{
     const lanes=effLanes(g);
     const dur=effDur(g);
+    /* a group needs its lanes side by side, so it can't be wider than the
+       widest stretch of water between bulkheads */
+    if(lanes>maxSec){
+      failures.push({gid:g.id,day:null,solvable:false,
+        msg:`${g.name}: needs ${lanes} lanes side by side, but the widest section of the pool is ${maxSec}. Give it fewer lanes, or move a bulkhead.`});
+      return {g,lanes,dur,ck:"",auto:false,cands:[],want:0,days:[],prio:5,slack:0};
+    }
     const fits=i=>{
       if(!occ[i])return false;
       const[ws,we]=gwin(g,i);
@@ -767,7 +785,7 @@ function generate(){
     }
   }
   state.blocks=best.res.blocks;
-  state.failures=best.res.failures.map(f=>f.msg);
+  state.failures=[...new Set(best.res.failures.map(f=>f.msg))];
   state.generated=true;
   renderResults();
 }
@@ -800,7 +818,7 @@ function solveDayExact(p,d,blocks,ids,deadline){
     const opts=[];
     for(const st of starts)for(let lf=1;lf<=p.lanes-lanes+1;lf++){
       const lt=lf+lanes-1;
-      if(p.bulk>0&&lf<=p.bulk&&lt>p.bulk)continue;
+      if(crossesBulk(p,lf,lt))continue;
       opts.push({s:st,e:st+dur,lf,lt,m:maskOf(lf,lt)});
     }
     items.push({g,opts,ck:(g.coach||"").trim().toLowerCase()});
@@ -857,7 +875,7 @@ function collides(b,day,s,e,lf,lt){
 /* everything wrong with a block as currently placed, in plain words */
 function conflictsOf(b){
   const p=poolCfg(),out=[];
-  if(p.bulk>0&&b.lf<=p.bulk&&b.lt>p.bulk)out.push("crosses the bulkhead");
+  if(crossesBulk(p,b.lf,b.lt))out.push("crosses a bulkhead");
   const g=b.kind==="grp"?state.groups.find(x=>x.id===b.ref):null;
   const ck=g&&g.coach?g.coach.trim().toLowerCase():"";
   for(const o of state.blocks){
@@ -938,17 +956,16 @@ function renderGrids(){
     addWrap.appendChild(sel);addWrap.appendChild(addBtn);
     head.appendChild(addWrap);
     sec.appendChild(head);
-    if(p.bulk>0&&p.bulk<p.lanes){
-      sec.appendChild(el("div","sides",`<span style="flex:${p.bulk}">${esc(p.sideA)} · lanes 1–${p.bulk}</span><span style="flex:${p.lanes-p.bulk};text-align:right">${esc(p.sideB)} · lanes ${p.bulk+1}–${p.lanes}</span>`));
-    }
     const wrap=el("div","grid-wrap");
+    if(p.bulks.length){
+      wrap.appendChild(el("div","sides",sections(p).map(s=>`<span style="flex:${s.to-s.from+1}" title="${esc(secText(s))}">${esc(secText(s))}</span>`).join("")));
+    }
     const grid=el("div","pgrid");
-    const hasBulk=p.bulk>0&&p.bulk<p.lanes;
     const cols=["52px"];
-    for(let l=1;l<=p.lanes;l++){cols.push("minmax(30px,1fr)");if(hasBulk&&l===p.bulk)cols.push("10px");}
+    for(let l=1;l<=p.lanes;l++){cols.push("minmax(30px,1fr)");if(p.bulks.includes(l))cols.push("10px");}
     grid.style.gridTemplateColumns=cols.join(" ");
     grid.style.gridTemplateRows=`26px repeat(${nSlots}, var(--slot-h))`;
-    const laneCol=l=>1+l+(hasBulk&&l>p.bulk?1:0);
+    const laneCol=l=>laneColOf(p,l);
     /* lane headers + underlay columns */
     for(let l=1;l<=p.lanes;l++){
       const h=el("div","laneno",l);h.style.gridColumn=laneCol(l);h.style.gridRow=1;grid.appendChild(h);
@@ -959,9 +976,9 @@ function renderGrids(){
       if(off)u.style.backgroundPosition=`0 calc(var(--slot-h)*${off})`;
       grid.appendChild(u);
     }
-    if(hasBulk){
-      const bk=el("div","bulk");bk.style.gridColumn=1+p.bulk+1;bk.style.gridRow=`1 / span ${nSlots+1}`;grid.appendChild(bk);
-    }
+    p.bulks.forEach(b=>{
+      const bk=el("div","bulk");bk.style.gridColumn=laneCol(b)+1;bk.style.gridRow=`1 / span ${nSlots+1}`;grid.appendChild(bk);
+    });
     /* time labels */
     for(let i=0;i<nSlots;i++){
       const t=s+i*15;
@@ -1053,7 +1070,7 @@ function addPractice(d,gid){
     if(!coachOk(sm))continue;
     for(let lf=1;lf<=p.lanes-lanes+1;lf++){
       const lt=lf+lanes-1;
-      if(p.bulk>0&&lf<=p.bulk&&lt>p.bulk)continue;
+      if(crossesBulk(p,lf,lt))continue;
       if(clear(sm,lf,lt)){hit={sm,lf,lt};break;}
     }
   }
@@ -1228,7 +1245,7 @@ function sheetXml(sh){
 <sheetPr>${sh.tab?`<tabColor rgb="FF${sh.tab}"/>`:""}<pageSetUpPr fitToPage="1"/></sheetPr>
 <sheetViews><sheetView workbookViewId="0">${pane}</sheetView></sheetViews>
 <sheetFormatPr defaultRowHeight="15"/>
-${sh.cols.length?`<cols>${sh.cols.map(c=>`<col min="${c.c}" max="${c.c}" width="${c.w}" customWidth="1"/>`).join("")}</cols>`:""}
+${sh.cols.length?`<cols>${sh.cols.slice().sort((a,b)=>a.c-b.c).map(c=>`<col min="${c.c}" max="${c.c}" width="${c.w}" customWidth="1"/>`).join("")}</cols>`:""}
 <sheetData>${body}</sheetData>
 ${sh.merges.length?`<mergeCells count="${sh.merges.length}">${sh.merges.map(m=>`<mergeCell ref="${m}"/>`).join("")}</mergeCells>`:""}
 <pageMargins left="0.25" right="0.25" top="0.35" bottom="0.35" header="0.3" footer="0.3"/>
@@ -1306,9 +1323,8 @@ function exportXlsx(){
   sheets.push(W);
 
   /* ---- one sheet per day ---- */
-  const hasBulk=p.bulk>0&&p.bulk<p.lanes;
-  const laneCol=l=>1+l+(hasBulk&&l>p.bulk?1:0);
-  const bulkCol=1+p.bulk+1;
+  const hasBulk=p.bulks.length>0;
+  const laneCol=l=>laneColOf(p,l);
   const sideSty=S.xf({font:{sz:9,b:1,color:XMUT,name:"Arial"},align:{h:"center"}});
   const laneSty=S.xf({font:{sz:10,b:1,color:XNAVY,name:"Arial"},border:{bottom:med},align:{h:"center"}});
   const bulkSty=S.xf({fill:{p:"solid",fg:XNAVY}});
@@ -1317,12 +1333,10 @@ function exportXlsx(){
     const d=state.days[di],s0=toMin(d.start),e0=toMin(d.end),n=(e0-s0)/15;
     const D=sheetBuilder(DAYS[di]);
     D.set(1,1,DAYS[di].toUpperCase(),S.xf({font:{sz:12,b:1,color:XNAVY,name:"Arial"}}));
-    if(hasBulk){
-      D.set(1,laneCol(1),`${(p.sideA||"").toUpperCase()}  \u00b7  LANES 1\u2013${p.bulk}`,sideSty);
-      D.merge(1,laneCol(1),1,laneCol(p.bulk));
-      D.set(1,laneCol(p.bulk+1),`${(p.sideB||"").toUpperCase()}  \u00b7  LANES ${p.bulk+1}\u2013${p.lanes}`,sideSty);
-      D.merge(1,laneCol(p.bulk+1),1,laneCol(p.lanes));
-    }
+    if(hasBulk)sections(p).forEach(sc=>{
+      D.set(1,laneCol(sc.from),secText(sc).toUpperCase(),sideSty);
+      D.merge(1,laneCol(sc.from),1,laneCol(sc.to));
+    });
     D.set(2,1,"TIMES",S.xf({font:{sz:9,b:1,color:XMUT,name:"Arial"},border:{bottom:med}}));
     for(let l=1;l<=p.lanes;l++)D.set(2,laneCol(l),l,laneSty,true);
     for(let i=0;i<n;i++){
@@ -1331,7 +1345,7 @@ function exportXlsx(){
       for(let l=1;l<=p.lanes;l++)D.style(r,laneCol(l),gridSty);
       D.height(r,13.5);
     }
-    if(hasBulk){for(let r=1;r<3+n;r++)D.style(r,bulkCol,bulkSty);D.width(bulkCol,1.2);}
+    p.bulks.forEach(b=>{const bc=laneCol(b)+1;for(let r=1;r<3+n;r++)D.style(r,bc,bulkSty);D.width(bc,1.2);});
     state.blocks.filter(b=>b.day===di).forEach(b=>{
       const r1=3+(b.s-s0)/15,r2=3+(b.e-s0)/15-1,c1=laneCol(b.lf),c2=laneCol(b.lt);
       const g=gmap.get(b.ref);
@@ -1406,9 +1420,8 @@ document.getElementById("importFile").onchange=e=>{
       const d=JSON.parse(txt);
       if(d.pool){
         document.getElementById("setLanes").value=d.pool.lanes;
-        document.getElementById("setBulk").value=d.pool.bulk;
-        document.getElementById("setSideA").value=d.pool.sideA;
-        document.getElementById("setSideB").value=d.pool.sideB;
+        document.getElementById("setBulk").value=Array.isArray(d.pool.bulks)?d.pool.bulks.join(", "):(d.pool.bulk||"");
+        document.getElementById("setSides").value=Array.isArray(d.pool.sides)?d.pool.sides.join(", "):[d.pool.sideA,d.pool.sideB].filter(Boolean).join(", ");
         document.getElementById("setPerLane").value=d.pool.perLane;
       }
       if(d.days)state.days=d.days;
